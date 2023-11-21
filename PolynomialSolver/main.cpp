@@ -158,13 +158,18 @@ vector<int> parse_equation(string equation)
         }
     }
 
-    reverse(res.begin(), res.end());
-
     return res;
 }
 
-vector<int> dydx_equation(vector<int> equation) {
+vector<int> differentiate_equation(vector<int> equation) {
     vector<int> res;
+
+    for (int i = 0; i < equation.size(); i++) {
+        res.push_back(0);
+
+        if (i == 0) continue;
+        else res[i - 1] = equation[i] * i;
+    }
 
     return res;
 }
@@ -172,7 +177,9 @@ vector<int> dydx_equation(vector<int> equation) {
 int main() {
 
     for (string i : equations) {
-        vector<int> parsed_equation = parse_equation(i);
+        vector<int> equation = parse_equation(i);
+        vector<int> dydx_equation = differentiate_equation(equation);
+
     }
 
     return 0;
