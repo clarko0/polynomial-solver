@@ -3,31 +3,16 @@
 #include <tuple>
 #include <regex>
 #include <string>
+#include <random>
 #include <algorithm>
+#include <chrono>
+#include <thread>
 
 using namespace std;
 
 vector<string> equations = {
-        "x^2-5x+2=5x^10-4",
-        "3x^4+2x^3-x^2+5=0",
-        "4x^3-x^2+7x-1=2x^5+3",
-        "x^3+6x^2-3x+2=4x^4-5x^2+1",
-        "2x^4+4x^3-6x^2+x-3=0",
-        "5x^3+2x^2+8=3x^4+x^2-7",
-        "3x^2-x+5=2x^6+x^3-4x^2",
-        "2x^3-4x+1=x^5+3x^2-6",
-        "x^3+x^2+3x-2=0",
-        "4x^2-2x+7=3x^4-x^2+5",
-        "2x^3+5x^2-x=3x^6+2x^3-x^2",
-        "3x^2-x+6=x^4+2x^2-3",
-        "x^3-2x+4=0",
-        "5x^3+x-3=2x^5-x^3+4",
-        "4x^2-x^2+2x-5=0",
-        "2x^3+3x-1=x^4+5x^2-2",
-        "x^3+2x+5=0",
-        "3x^2-x^2+4x-2=x^4+3x^2-1",
-        "4x^3+2x-1=0",
-        "x^3-x^2+3x+7=2x^4-x^2+5"
+    "x^2-5x-90=0",
+    "x^2-5x+2=5x^10-4"
 };
 
 vector<string> split(string s, string delimiter) {
@@ -161,6 +146,15 @@ vector<int> parse_equation(string equation)
     return res;
 }
 
+double calculate_equation(vector<int> equation, double x) {
+    double total = 0;
+    for (int i = 0; i < equation.size(); i++) {
+        total += equation[i] * pow(x, i);
+    }
+
+    return total;
+}
+
 vector<int> differentiate_equation(vector<int> equation) {
     vector<int> res;
 
@@ -174,13 +168,83 @@ vector<int> differentiate_equation(vector<int> equation) {
     return res;
 }
 
+double newtons_method(vector<int> y, vector<int> dydx, double x)
+{
+    double rightPart = calculate_equation(y, x) / calculate_equation(dydx, x);
+
+    return x - rightPart;
+}
+
+double random_int(int lower, int upper) {
+    random_device rd;
+    mt19937 gen(rd());
+
+    uniform_int_distribution<> distribution(lower, upper - 1);
+
+    int random_int = distribution(gen);
+
+    return random_int;
+}
+
+void solve_equation(string equation, double precision) {
+    auto start_time = chrono::high_resolution_clock::now();
+
+    string raw_equation = equation;
+
+    vector<int> y = parse_equation(raw_equation);
+    vector<int> dydx = differentiate_equation(y);
+
+    vector<double> x_values;
+
+    int max_iterations = 500;
+    int iteration = 0;
+
+    while (iteration <= max_iterations) {
+        if (x_values.size() == y.size() - 1) break;
+
+        double x = random_int(-20000000, 2000000);
+        double prevX = 0;
+
+        while (true) {
+            x = newtons_method(y, dydx, x);
+
+            double diff = x - prevX;
+            prevX = x;
+            if (diff >= -precision && diff <= precision) {
+                bool inSet = false;
+                for (int i = 0; i < x_values.size(); i++) {
+                    if (x_values[i] >= x - precision && x_values[i] <= x + precision) {
+                        inSet = true;
+                        break;
+                    }
+                }
+
+                if (!inSet) x_values.push_back(x);
+
+                break;
+            }
+        }
+
+        iteration++;
+    }
+
+    auto end_time = chrono::high_resolution_clock::now();
+
+    auto duration = chrono::duration_cast<chrono::milliseconds>(end_time - start_time);
+
+    for (double i : x_values) {
+        cout << "x = " << i << endl;
+    }
+
+    cout << "time taken: " << duration.count() << "ms" << endl;
+}
+
 int main() {
 
-    for (string i : equations) {
-        vector<int> equation = parse_equation(i);
-        vector<int> dydx_equation = differentiate_equation(equation);
-
+    for (string equation : equations) {
+        solve_equation(equation, 0.000001);
     }
+
 
     return 0;
 }
