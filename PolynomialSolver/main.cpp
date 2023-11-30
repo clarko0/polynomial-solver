@@ -6,13 +6,15 @@
 #include <random>
 #include <algorithm>
 #include <chrono>
+#include <complex>
 #include <thread>
 
 using namespace std;
 
 vector<string> equations = {
     "x^2-5x-90=0",
-    "x^2-5x+2=5x^10-4"
+    "x^2-5x+2=5x^10-4",
+    "x^3-1=0"
 };
 
 vector<string> split(string s, string delimiter) {
@@ -146,8 +148,8 @@ vector<int> parse_equation(string equation)
     return res;
 }
 
-double calculate_equation(vector<int> equation, double x) {
-    double total = 0;
+complex<double> calculate_equation(vector<int> equation, complex<double> x) {
+    complex<double> total = 0;
     for (int i = 0; i < equation.size(); i++) {
         total += equation[i] * pow(x, i);
     }
@@ -168,9 +170,9 @@ vector<int> differentiate_equation(vector<int> equation) {
     return res;
 }
 
-double newtons_method(vector<int> y, vector<int> dydx, double x)
+complex<double> newtons_method(vector<int> y, vector<int> dydx, complex<double> x)
 {
-    double rightPart = calculate_equation(y, x) / calculate_equation(dydx, x);
+    complex<double> rightPart = calculate_equation(y, x) / calculate_equation(dydx, x);
 
     return x - rightPart;
 }
@@ -186,7 +188,7 @@ double random_int(int lower, int upper) {
     return random_int;
 }
 
-void solve_equation(string equation, double precision) {
+void solve_equation(string equation, complex<double> precision) {
     auto start_time = chrono::high_resolution_clock::now();
 
     string raw_equation = equation;
@@ -194,7 +196,7 @@ void solve_equation(string equation, double precision) {
     vector<int> y = parse_equation(raw_equation);
     vector<int> dydx = differentiate_equation(y);
 
-    vector<double> x_values;
+    vector<complex<double>> x_values;
 
     int max_iterations = 500;
     int iteration = 0;
@@ -202,13 +204,13 @@ void solve_equation(string equation, double precision) {
     while (iteration <= max_iterations) {
         if (x_values.size() == y.size() - 1) break;
 
-        double x = random_int(-20000000, 2000000);
-        double prevX = 0;
+        complex<double> x(random_int(-20000000, 2000000), random_int(-20000000, 2000000));
+        complex<double> prevX(0,0);
 
         while (true) {
             x = newtons_method(y, dydx, x);
 
-            double diff = x - prevX;
+            complex<double> diff = x - prevX;
             prevX = x;
             if (diff >= -precision && diff <= precision) {
                 bool inSet = false;
@@ -232,7 +234,7 @@ void solve_equation(string equation, double precision) {
 
     auto duration = chrono::duration_cast<chrono::milliseconds>(end_time - start_time);
 
-    for (double i : x_values) {
+    for (complex<double> i : x_values) {
         cout << "x = " << i << endl;
     }
 
